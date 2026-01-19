@@ -34,11 +34,10 @@ VALUES
 """
 
 insert_post_sql = """
-    INSERT INTO post (user_id, post_text)
-    VALUES
-    (?, ?)
-    ;
-"""
+                  INSERT INTO post (user_id, post_text)
+                  VALUES (?, ?)
+                  ; \
+                  """
 
 query_user_sql = """
             SELECT *
@@ -52,12 +51,21 @@ query_specific_user_sql = """
                 """
 
 query_post_sql = """
-    SELECT username, post_text
-        FROM post
-        INNER JOIN user
-        ON post.user_id = user.id
-        ;
-        """
+            SELECT username, post_text
+            FROM post
+            INNER JOIN user
+            ON post.user_id = user.id
+            ;
+                """
+
+query_users_posts = """
+            SELECT post_text
+            FROM post
+            INNER JOIN user
+            ON post.user_id = user.id
+            WHERE user.id=?
+            ;
+                    """
 
 delete_user_sql = """
             DELETE
@@ -76,7 +84,8 @@ while True:
     print("3: Delete user")
     print("4: Log in")
     print("5: Post")
-    print("6: Show posts")
+    print("6: Show all posts")
+    print("7: Show your posts")
 
     choice = int(input("Enter your choice: "))
 
@@ -103,11 +112,15 @@ while True:
         if user_query_response:
             logged_in_userid, logged_in_username = user_query_response
             print(f"Logged in as {logged_in_username}")
+        else:
+            logged_in_userid = None
+            logged_in_username = None
 
     elif choice == 5:
         if logged_in_userid:
             post_text = input(f"What is your post, {logged_in_username}?")
             cursor.execute(insert_post_sql, (logged_in_userid, post_text))
+            connection.commit()
 
         else:
             print("No one is logged in")
@@ -118,6 +131,13 @@ while True:
 
         for username, post_text in post_query:
             print(f"{username}: {post_text}")
+
+    elif choice == 7:
+        cursor.execute(query_users_posts, (logged_in_userid,))
+        user_post_query = cursor.fetchall()
+
+        for post_text in user_post_query:
+            print(post_text)
 
     connection.commit()
 
